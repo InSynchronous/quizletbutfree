@@ -1,0 +1,97 @@
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  color: #111;
+  background: #fff;
+}
+
+main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+header {
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+#status {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+#term {
+  font-size: 28px;
+  margin: 0 0 16px;
+}
+
+#options {
+  display: grid;
+  gap: 8px;
+}
+
+#options button {
+  text-align: left;
+  font-size: 15px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#options button:hover:not(:disabled) {
+  border-color: #111;
+}
+
+#options button:disabled {
+  cursor: default;
+}
+
+#options button.correct {
+  border-color: #1a7f37;
+  background: #eef7ef;
+}
+
+#options button.wrong {
+  border-color: #b3261e;
+  background: #fdecea;
+}
+
+#next, #restart {
+  margin-top: 16px;
+  font-size: 15px;
+  padding: 8px 16px;
+  background: #111;
+  color: #fff;
+  border: 1px solid #111;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#next:disabled {
+  background: #fff;
+  color: #999;
+  border-color: #ccc;
+  cursor: default;
+}
+
+#final {
+  font-size: 18px;
+}
+
+#missed p {
+  font-size: 14px;
+  border-top: 1px solid #eee;
+  padding: 8px 0;
+  margin: 0;
+}
