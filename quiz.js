@@ -160,6 +160,7 @@ function updateCoinsUI() {
   }
   if (shopCoinsEl) shopCoinsEl.textContent = `🪙 ${coins}`;
   if (typeof refreshBJ === "function") refreshBJ();
+  if (typeof refreshRO === "function") refreshRO();
 }
 
 function addCoins(n) {
@@ -654,7 +655,171 @@ if (bjFreeBtn) {
   });
 }
 
+// --- roulette (red / black 1:1, green 14x) ---
+const roMsgEl = document.getElementById("ro-msg");
+const roWheelEl = document.getElementById("ro-wheel");
+const roDotEl = document.getElementById("ro-dot");
+const roLabelEl = document.getElementById("ro-label");
+const roBetEl = document.getElementById("ro-bet");
+const roSpinBtn = document.getElementById("ro-spin");
+const roFreeBtn = document.getElementById("ro-free");
+const roChipsEl = document.getElementById("ro-chips");
+const roColorBtns = {
+  red: document.getElementById("ro-red"),
+  black: document.getElementById("ro-black"),
+  green: document.getElementById("ro-green"),
+};
+
+// 15 slots, matches the conic-gradient order: 1 green + 7 red + 7 black
+const RO_SLOTS = ["green", "red", "black", "red", "black", "red", "black", "red", "black", "red", "black", "red", "black", "red", "black"];
+const RO_EMOJI = { red: "🔴", black: "⚫", green: "🟢" };
+
+let roBet = 10;
+let roColor = "red";
+let roPhase = "idle"; // "idle" | "spinning"
+let roRotation = 0;
+
+function roSetMsg(text) {
+  if (roMsgEl) roMsgEl.textContent = text;
+}
+
+function roShowResult(color) {
+  if (roDotEl) roDotEl.className = color;
+  if (roLabelEl) roLabelEl.textContent = color.toUpperCase();
+}
+
+function roMotionOK() {
+  try {
+    if (document.body.classList.contains("no-motion")) return false;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+  } catch (_) {}
+  return true;
+}
+
+function refreshRO() {
+  if (!roSpinBtn) return;
+  const spinning = roPhase === "spinning";
+  if (roFreeBtn) roFreeBtn.hidden = coins >= 10;
+  if (roBetEl) roBetEl.textContent = `${roBet}`;
+  for (const [c, btn] of Object.entries(roColorBtns)) {
+    if (!btn) continue;
+    btn.classList.toggle("active", c === roColor);
+    btn.setAttribute("aria-pressed", String(c === roColor));
+    btn.disabled = spinning;
+  }
+  if (roChipsEl) {
+    [...roChipsEl.querySelectorAll("button")].forEach((b) => {
+      b.disabled = spinning;
+      if (b.id !== "ro-max") b.classList.toggle("active", Number(b.dataset.bet) === roBet);
+      else b.classList.remove("active");
+    });
+  }
+  if (spinning) {
+    roSpinBtn.disabled = true;
+    return;
+  }
+  roSpinBtn.disabled = coins < roBet || roBet <= 0;
+  if (coins < roBet && coins >= 10) {
+    roSetMsg("Bet too high for your balance. Lower it or earn more in the quiz.");
+  } else if (coins < 10 && roMsgEl && !roMsgEl.textContent) {
+    roSetMsg("Out of coins — answer quiz questions or claim free coins.");
+  }
+}
+
+function roSelectColor(color) {
+  if (roPhase === "spinning") return;
+  if (!RO_SLOTS.includes(color) && color !== "red" && color !== "black" && color !== "green") return;
+  roColor = color;
+  refreshRO();
+}
+
+function roSpin() {
+  if (roPhase === "spinning") return;
+  if (coins < roBet || roBet <= 0) {
+    refreshRO();
+    return;
+  }
+  coins -= roBet;
+  saveCoins();
+  updateCoinsUI();
+  roPhase = "spinning";
+  refreshRO();
+  roSetMsg(`Spinning for ${RO_EMOJI[roColor]} ${roColor}… (bet 🪙${roBet})`);
+
+  const idx = Math.floor(Math.random() * RO_SLOTS.length);
+  const outcome = RO_SLOTS[idx];
+  // pointer sits at top (0deg); slot i center is at i*24+12deg on the wheel
+  const target = -(idx * 24 + 12);
+  const base = Math.ceil(roRotation / 360) * 360;
+  let delta = ((target - base) % 360 + 360) % 360;
+  roRotation = base + 360 * 5 + delta; // 5 full turns + land on slot
+  const animate = roMotionOK() && roWheelEl;
+
+  const resolve = () => {
+    const win = outcome === roColor;
+    roShowResult(outcome);
+    roPhase = "idle";
+    if (win) {
+      const mult = outcome === "green" ? 15 : 2; // stake back + profit (green profit = 14x)
+      const profit = roBet * (mult - 1);
+      coins += roBet * mult;
+      saveCoins();
+      correctSound();
+      if (outcome === "green") {
+        roSetMsg(`🟢 GREEN HITS! +${profit} 🪙 on 🪙${roBet} bet 🎉`);
+        launchConfetti(30);
+      } else {
+        roSetMsg(`${RO_EMOJI[outcome]} ${outcome[0].toUpperCase() + outcome.slice(1)} hits! +${profit} 🪙`);
+      }
+    } else {
+      wrongSound();
+      shakeRails();
+      roSetMsg(`${RO_EMOJI[outcome]} ${outcome[0].toUpperCase() + outcome.slice(1)} hits — you picked ${RO_EMOJI[roColor]} ${roColor}. Lost 🪙${roBet}.`);
+    }
+    updateCoinsUI();
+    refreshRO();
+  };
+
+  if (animate) {
+    requestAnimationFrame(() => {
+      roWheelEl.style.transform = `rotate(${roRotation}deg)`;
+    });
+    setTimeout(resolve, 1350);
+  } else {
+    if (roWheelEl) roWheelEl.style.transform = `rotate(${roRotation}deg)`;
+    setTimeout(resolve, 50);
+  }
+}
+
+if (roChipsEl) {
+  roChipsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn || roPhase === "spinning") return;
+    if (btn.id === "ro-max") {
+      roBet = Math.max(10, Math.min(coins, 500));
+    } else {
+      roBet = Number(btn.dataset.bet) || 10;
+    }
+    refreshRO();
+  });
+}
+for (const [c, btn] of Object.entries(roColorBtns)) {
+  if (btn) btn.addEventListener("click", () => roSelectColor(c));
+}
+if (roSpinBtn) roSpinBtn.addEventListener("click", roSpin);
+if (roFreeBtn) {
+  roFreeBtn.addEventListener("click", () => {
+    if (coins >= 10) return;
+    coins += 25;
+    saveCoins();
+    updateCoinsUI();
+    roSetMsg("Claimed +25 🪙. Good luck!");
+    refreshRO();
+  });
+}
+
 initMotion();
 start();
 updateCoinsUI();
 refreshBJ();
+refreshRO();

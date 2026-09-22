@@ -121,6 +121,39 @@
           <button id="bj-free" type="button" hidden>Out of coins? Claim +25 free</button>
         </div>
       </div>
+
+      <div class="shop-item ro">
+        <h3>🎡 Roulette</h3>
+        <p class="shop-sub">Red / Black pays 1:1 · Green pays 14x</p>
+        <div id="ro-table">
+          <p id="ro-msg" aria-live="polite">Pick a color and spin.</p>
+          <div id="ro-stage">
+            <div id="ro-wheel" aria-hidden="true">
+              <div id="ro-pointer"></div>
+            </div>
+            <p id="ro-result"><span id="ro-dot"></span><b id="ro-label">—</b></p>
+          </div>
+          <div id="ro-colors" role="group" aria-label="Bet color">
+            <button type="button" id="ro-red" class="ro-color red active" aria-pressed="true">🔴 Red <small>1:1</small></button>
+            <button type="button" id="ro-black" class="ro-color black" aria-pressed="false">⚫ Black <small>1:1</small></button>
+            <button type="button" id="ro-green" class="ro-color green" aria-pressed="false">🟢 Green <small>14x</small></button>
+          </div>
+          <div id="ro-bet-row">
+            <span id="ro-bet-label">Bet: 🪙 <b id="ro-bet">10</b></span>
+            <div id="ro-chips" role="group" aria-label="Bet amount">
+              <button type="button" data-bet="10">10</button>
+              <button type="button" data-bet="25">25</button>
+              <button type="button" data-bet="50">50</button>
+              <button type="button" data-bet="100">100</button>
+              <button type="button" id="ro-max">MAX</button>
+            </div>
+          </div>
+          <div id="ro-actions">
+            <button id="ro-spin" type="button">Spin</button>
+          </div>
+          <button id="ro-free" type="button" hidden>Out of coins? Claim +25 free</button>
+        </div>
+      </div>
     </div>
   </section>
   <script src="cards.js"></script>
