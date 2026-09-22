@@ -96,7 +96,7 @@ h1 {
   background: #331417;
 }
 
-#next, #restart {
+#next, #restart, #retry-missed, #submit {
   margin-top: 16px;
   font-size: 15px;
   padding: 8px 16px;
@@ -105,13 +105,43 @@ h1 {
   border: 1px solid #e6e6e6;
   border-radius: 4px;
   cursor: pointer;
+  transition: transform 0.08s ease;
 }
 
-#next:disabled {
+#next:not(:disabled):active,
+#restart:active,
+#retry-missed:active,
+#submit:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+#retry-missed {
+  background: transparent;
+  color: #e6e6e6;
+}
+
+#retry-missed:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+#result-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#next:disabled, #submit:disabled {
   background: #222;
   color: #666;
   border-color: #444;
   cursor: default;
+}
+
+#quiz-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 #final {
@@ -152,4 +182,164 @@ h1 {
   opacity: 1;
   color: #fff;
   text-decoration: underline;
+}
+
+/* --- game feel --- */
+
+#progress {
+  height: 6px;
+  background: #222;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 10px 0 2px;
+}
+
+#bar {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2ea043, #7ee787);
+  transition: width 0.3s ease;
+}
+
+#status.bump {
+  animation: bump 0.25s ease;
+}
+
+#term {
+  animation: slide-in 0.22s ease;
+}
+
+#feedback {
+  min-height: 22px;
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#feedback.good {
+  color: #7ee787;
+}
+
+#feedback.bad {
+  color: #f85149;
+}
+
+#feedback.fire {
+  color: #ffa657;
+}
+
+#options button {
+  transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+#options button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+#options button:not(:disabled):active {
+  transform: scale(0.99);
+}
+
+#options button.selected {
+  border-color: #79c0ff;
+  background: #12233a;
+}
+
+#options button.correct {
+  animation: pop 0.25s ease;
+}
+
+#options button.wrong {
+  animation: shake 0.3s ease;
+}
+
+#options button kbd {
+  display: inline-block;
+  min-width: 20px;
+  text-align: center;
+  font-size: 11px;
+  font-family: inherit;
+  color: #999;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-right: 8px;
+}
+
+#quiz.shake {
+  animation: shake 0.3s ease;
+}
+
+#final {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+#grade {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+
+#best {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 12px;
+}
+
+.confetti {
+  position: fixed;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  z-index: 50;
+  pointer-events: none;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes confetti-fall {
+  to { transform: translateY(105vh) rotate(720deg); opacity: 0.8; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #bar,
+  #options button,
+  #next, #restart, #retry-missed, #submit {
+    transition: none;
+  }
+  #term,
+  #status.bump,
+  #options button.correct,
+  #options button.wrong,
+  #quiz.shake {
+    animation: none;
+  }
+  .confetti { display: none; }
 }

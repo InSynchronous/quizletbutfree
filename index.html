@@ -11,6 +11,7 @@
     <header>
       <h1>Odyssey 509-1333</h1>
       <p id="status">1 / 30 · Score 0</p>
+      <div id="progress" aria-hidden="true"><div id="bar"></div></div>
       <div id="modes" role="group" aria-label="Quiz mode">
         <button id="mode-forward" class="mode active" type="button">Word → Definition</button>
         <button id="mode-reverse" class="mode" type="button">Definition → Word</button>
@@ -19,14 +20,23 @@
 
     <section id="quiz">
       <p id="term"></p>
+      <p id="feedback" aria-live="polite"></p>
       <div id="options"></div>
-      <button id="next" disabled>Next</button>
+      <div id="quiz-actions">
+        <button id="submit" disabled>Submit</button>
+        <button id="next" disabled>Next →</button>
+      </div>
     </section>
 
     <section id="result" hidden>
       <p id="final"></p>
+      <p id="grade"></p>
+      <p id="best"></p>
       <div id="missed"></div>
-      <button id="restart">Restart</button>
+      <div id="result-actions">
+        <button id="retry-missed">Retry missed</button>
+        <button id="restart">Restart</button>
+      </div>
     </section>
 
     <footer class="watermark">
