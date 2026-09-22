@@ -1,8 +1,8 @@
 body {
   font-family: system-ui, -apple-system, sans-serif;
   margin: 0;
-  color: #111;
-  background: #fff;
+  color: #e6e6e6;
+  background: #111;
 }
 
 main {
@@ -12,7 +12,7 @@ main {
 }
 
 header {
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #333;
   margin-bottom: 24px;
   padding-bottom: 12px;
 }
@@ -26,7 +26,7 @@ h1 {
 #status {
   margin: 0;
   font-size: 14px;
-  color: #555;
+  color: #aaa;
 }
 
 #term {
@@ -49,17 +49,17 @@ h1 {
 .mode {
   font-size: 13px;
   padding: 6px 12px;
-  background: #fff;
-  border: 1px solid #ccc;
+  background: #222;
+  border: 1px solid #444;
   border-radius: 999px;
   cursor: pointer;
-  color: #555;
+  color: #aaa;
 }
 
 .mode.active {
-  background: #111;
-  border-color: #111;
-  color: #fff;
+  background: #e6e6e6;
+  border-color: #e6e6e6;
+  color: #111;
 }
 
 #options {
@@ -71,14 +71,15 @@ h1 {
   text-align: left;
   font-size: 15px;
   padding: 10px 12px;
-  background: #fff;
-  border: 1px solid #ccc;
+  background: #1c1c1c;
+  border: 1px solid #444;
   border-radius: 4px;
   cursor: pointer;
+  color: #e6e6e6;
 }
 
 #options button:hover:not(:disabled) {
-  border-color: #111;
+  border-color: #e6e6e6;
 }
 
 #options button:disabled {
@@ -86,30 +87,30 @@ h1 {
 }
 
 #options button.correct {
-  border-color: #1a7f37;
-  background: #eef7ef;
+  border-color: #2ea043;
+  background: #122b1a;
 }
 
 #options button.wrong {
-  border-color: #b3261e;
-  background: #fdecea;
+  border-color: #f85149;
+  background: #331417;
 }
 
 #next, #restart {
   margin-top: 16px;
   font-size: 15px;
   padding: 8px 16px;
-  background: #111;
-  color: #fff;
-  border: 1px solid #111;
+  background: #e6e6e6;
+  color: #111;
+  border: 1px solid #e6e6e6;
   border-radius: 4px;
   cursor: pointer;
 }
 
 #next:disabled {
-  background: #fff;
-  color: #999;
-  border-color: #ccc;
+  background: #222;
+  color: #666;
+  border-color: #444;
   cursor: default;
 }
 
@@ -119,7 +120,7 @@ h1 {
 
 #missed p {
   font-size: 14px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #333;
   padding: 8px 0;
   margin: 0;
 }
@@ -127,7 +128,7 @@ h1 {
 .watermark {
   margin-top: 32px;
   padding-top: 12px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #333;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -149,6 +150,6 @@ h1 {
 
 .watermark a:hover {
   opacity: 1;
-  color: #111;
+  color: #fff;
   text-decoration: underline;
 }
