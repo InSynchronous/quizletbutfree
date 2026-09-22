@@ -785,22 +785,34 @@ body.no-motion .ball { opacity: 0; }
   flex-wrap: wrap;
 }
 
-#ro-wheel {
+#ro-wheel-wrap {
   position: relative;
   width: 132px;
   height: 132px;
-  border-radius: 50%;
   flex: 0 0 auto;
+}
+
+#ro-wheel {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   border: 3px solid #333;
   background: conic-gradient(
     #2ea043 0 24deg,
-    #da3633 24deg 72deg,
-    #161616 72deg 120deg,
-    #da3633 120deg 168deg,
-    #161616 168deg 216deg,
-    #da3633 216deg 264deg,
-    #161616 264deg 312deg,
-    #da3633 312deg 360deg
+    #da3633 24deg 48deg,
+    #161616 48deg 72deg,
+    #da3633 72deg 96deg,
+    #161616 96deg 120deg,
+    #da3633 120deg 144deg,
+    #161616 144deg 168deg,
+    #da3633 168deg 192deg,
+    #161616 192deg 216deg,
+    #da3633 216deg 240deg,
+    #161616 240deg 264deg,
+    #da3633 264deg 288deg,
+    #161616 288deg 312deg,
+    #da3633 312deg 336deg,
+    #161616 336deg 360deg
   );
   transition: transform 1.2s cubic-bezier(0.15, 0.85, 0.25, 1);
 }
@@ -815,6 +827,7 @@ body.no-motion .ball { opacity: 0; }
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
   border-top: 10px solid #ffd657;
+  z-index: 1;
 }
 
 #ro-result {
