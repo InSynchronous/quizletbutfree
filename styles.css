@@ -38,6 +38,49 @@ h1 {
   color: #aaa;
 }
 
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#wallet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#coins {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffd657;
+  background: #2a230a;
+  border: 1px solid #6b5d1f;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+#coins.bump {
+  animation: bump 0.25s ease;
+}
+
+#shop-open {
+  font-size: 13px;
+  padding: 6px 12px;
+  background: #2ea043;
+  border: 1px solid #2ea043;
+  color: #fff;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+#shop-open:hover {
+  background: #3fb950;
+}
+
 #term {
   font-size: 28px;
   margin: 0 0 16px;
@@ -542,3 +585,176 @@ body.no-motion .ball { opacity: 0; }
   .ball { opacity: 0; }
   #motion-toggle { display: none; }
 }
+
+/* --- shop + blackjack --- */
+
+#shop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 12px;
+  overflow-y: auto;
+}
+
+#shop[hidden] { display: none; }
+
+#shop-card {
+  width: min(560px, 100%);
+  background: #161616;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 20px;
+  animation: slide-in 0.2s ease;
+}
+
+#shop-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+#shop-head h2 {
+  margin: 0;
+  font-size: 20px;
+  flex: 1;
+}
+
+#shop-coins {
+  font-weight: 700;
+  color: #ffd657;
+  background: #2a230a;
+  border: 1px solid #6b5d1f;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+#shop-close {
+  background: #222;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+#shop-close:hover { color: #fff; border-color: #888; }
+
+.shop-item {
+  background: #0f2c1a;
+  border: 1px solid #2ea043;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.shop-item h3 { margin: 0 0 2px; font-size: 18px; }
+.shop-sub { margin: 0 0 12px; font-size: 13px; color: #9fb3a3; }
+
+#bj-msg {
+  min-height: 22px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #7ee787;
+  margin: 0 0 12px;
+}
+
+#bj-hands {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.bj-hand { display: grid; gap: 6px; }
+.bj-label { font-size: 13px; color: #aaa; }
+.bj-label b { color: #fff; }
+
+.bj-cards { display: flex; gap: 8px; flex-wrap: wrap; min-height: 58px; }
+
+.bj-card {
+  min-width: 46px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  background: #fff;
+  color: #111;
+  border-radius: 8px;
+  padding: 0 8px;
+  animation: pop 0.2s ease;
+}
+
+.bj-card.red { color: #c0392b; }
+.bj-card.face-down { background: #1c3a5f; color: #79c0ff; border: 1px solid #388bfd; }
+
+#bj-bet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+#bj-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+#bj-chips button {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #222;
+  color: #e6e6e6;
+  border: 1px solid #444;
+  cursor: pointer;
+}
+
+#bj-chips button:hover:not(:disabled) { border-color: #ffd657; }
+#bj-chips button.active { background: #ffd657; border-color: #ffd657; color: #111; }
+
+#bj-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+#bj-deal, #bj-hit, #bj-stand {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #7ee787;
+}
+
+#bj-deal { background: #2ea043; color: #fff; }
+#bj-deal:hover:not(:disabled) { background: #3fb950; }
+#bj-hit { background: #79c0ff; border-color: #79c0ff; color: #111; }
+#bj-stand { background: transparent; color: #e6e6e6; }
+
+#bj-deal:disabled, #bj-hit:disabled, #bj-stand:disabled {
+  background: #222;
+  color: #666;
+  border-color: #444;
+  cursor: default;
+}
+
+#bj-free {
+  margin-top: 12px;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px dashed #ffd657;
+  color: #ffd657;
+  cursor: pointer;
+}
+#bj-free[hidden] { display: none; }

@@ -10,6 +10,17 @@ let selectedIndex = -1;
 let autoTimer = null;
 let audioCtx = null;
 
+// --- coins ---
+let coins = 0;
+let coinsEarnedRun = 0;
+try {
+  const saved = Number(localStorage.getItem("odyssey-coins"));
+  coins = Number.isFinite(saved) && saved >= 0 ? Math.floor(saved) : 50;
+  if (localStorage.getItem("odyssey-coins") === null) coins = 50; // starter bankroll
+} catch (_) {
+  coins = 50;
+}
+
 const termEl = document.getElementById("term");
 const optionsEl = document.getElementById("options");
 const statusEl = document.getElementById("status");
@@ -27,6 +38,11 @@ const retryMissedBtn = document.getElementById("retry-missed");
 const modeForwardBtn = document.getElementById("mode-forward");
 const modeReverseBtn = document.getElementById("mode-reverse");
 const motionToggle = document.getElementById("motion-toggle");
+const coinsEl = document.getElementById("coins");
+const shopEl = document.getElementById("shop");
+const shopOpenBtn = document.getElementById("shop-open");
+const shopCloseBtn = document.getElementById("shop-close");
+const shopCoinsEl = document.getElementById("shop-coins");
 
 let buttonMode = "submit"; // "submit" | "next"
 let graded = false;
@@ -129,6 +145,37 @@ function updateStatus() {
   barEl.style.width = `${(index / order.length) * 100}%`;
 }
 
+function saveCoins() {
+  try {
+    localStorage.setItem("odyssey-coins", String(coins));
+  } catch (_) {}
+}
+
+function updateCoinsUI() {
+  if (coinsEl) {
+    coinsEl.textContent = `🪙 ${coins}`;
+    coinsEl.classList.remove("bump");
+    void coinsEl.offsetWidth;
+    coinsEl.classList.add("bump");
+  }
+  if (shopCoinsEl) shopCoinsEl.textContent = `🪙 ${coins}`;
+  if (typeof refreshBJ === "function") refreshBJ();
+}
+
+function addCoins(n) {
+  coins += n;
+  coinsEarnedRun += n;
+  saveCoins();
+  updateCoinsUI();
+}
+
+function coinReward() {
+  // base 10, streak bonuses: x3+ => 15, x5+ => 20
+  if (streak >= 5) return 20;
+  if (streak >= 3) return 15;
+  return 10;
+}
+
 function setFeedback(text, cls) {
   feedbackEl.textContent = text;
   feedbackEl.className = cls || "";
@@ -150,6 +197,7 @@ function start(customOrder) {
   missed = [];
   streak = 0;
   maxStreak = 0;
+  coinsEarnedRun = 0;
   selectedIndex = -1;
   document.body.dataset.hype = "0";
   document.body.classList.remove("shake-rails");
@@ -223,12 +271,14 @@ function submitAnswer() {
     maxStreak = Math.max(maxStreak, streak);
     btn.classList.add("correct");
     correctSound();
+    const reward = coinReward();
+    addCoins(reward);
     if (streak >= 4) {
-      setFeedback(`🔥 ${pick(FIRE_PRAISE)} x${streak}`, "fire");
+      setFeedback(`🔥 ${pick(FIRE_PRAISE)} x${streak} · +${reward} 🪙`, "fire");
     } else if (streak >= 2) {
-      setFeedback(`${pick(PRAISE)} x${streak}`, "good");
+      setFeedback(`${pick(PRAISE)} x${streak} · +${reward} 🪙`, "good");
     } else {
-      setFeedback(pick(PRAISE), "good");
+      setFeedback(`${pick(PRAISE)} +${reward} 🪙`, "good");
     }
     // correct: keep momentum, auto-advance
     resetActionButton("Submit", false);
@@ -296,7 +346,7 @@ function showResult() {
   resultSection.hidden = false;
   barEl.style.width = "100%";
   const pct = order.length ? Math.round((score / order.length) * 100) : 0;
-  finalEl.textContent = `Score: ${score} / ${order.length} (${pct}%) · Best streak 🔥${maxStreak}`;
+  finalEl.textContent = `Score: ${score} / ${order.length} (${pct}%) · Best streak 🔥${maxStreak} · +${coinsEarnedRun} 🪙 this run (balance 🪙${coins})`;
   gradeEl.textContent = getGrade(pct);
 
   try {
@@ -337,6 +387,7 @@ retryMissedBtn.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (e) => {
+  if (shopEl && !shopEl.hidden) return; // shop open — don't hijack keys
   if (quizSection.hidden) {
     if (e.key === "Enter" && !resultSection.hidden) {
       if (!retryMissedBtn.disabled) retryMissedBtn.click();
@@ -356,5 +407,254 @@ document.addEventListener("keydown", (e) => {
 modeForwardBtn.addEventListener("click", () => setMode("forward"));
 modeReverseBtn.addEventListener("click", () => setMode("reverse"));
 
+// --- shop ---
+function openShop() {
+  if (shopEl) {
+    shopEl.hidden = false;
+    updateCoinsUI();
+  }
+}
+function closeShop() {
+  if (shopEl) shopEl.hidden = true;
+}
+if (shopOpenBtn) shopOpenBtn.addEventListener("click", openShop);
+if (shopCloseBtn) shopCloseBtn.addEventListener("click", closeShop);
+if (shopEl) {
+  shopEl.addEventListener("click", (e) => {
+    if (e.target === shopEl) closeShop();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !shopEl.hidden) closeShop();
+  });
+}
+
+// --- blackjack ---
+const bjMsgEl = document.getElementById("bj-msg");
+const bjDealerEl = document.getElementById("bj-dealer");
+const bjPlayerEl = document.getElementById("bj-player");
+const bjDealerValEl = document.getElementById("bj-dealer-val");
+const bjPlayerValEl = document.getElementById("bj-player-val");
+const bjBetEl = document.getElementById("bj-bet");
+const bjDealBtn = document.getElementById("bj-deal");
+const bjHitBtn = document.getElementById("bj-hit");
+const bjStandBtn = document.getElementById("bj-stand");
+const bjFreeBtn = document.getElementById("bj-free");
+const bjChipsEl = document.getElementById("bj-chips");
+
+let bjBet = 10;
+let bjDeck = [];
+let bjPlayer = [];
+let bjDealer = [];
+let bjPhase = "betting"; // "betting" | "player" | "done"
+let bjHoleHidden = true;
+
+const BJ_SUITS = ["♠", "♥", "♦", "♣"];
+const BJ_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+
+function bjNewDeck() {
+  const d = [];
+  for (const s of BJ_SUITS) for (const r of BJ_RANKS) d.push({ r, s });
+  return shuffle(d);
+}
+
+function bjValue(hand) {
+  let total = 0;
+  let aces = 0;
+  for (const c of hand) {
+    if (c.r === "A") {
+      aces++;
+      total += 11;
+    } else if (["K", "Q", "J"].includes(c.r)) {
+      total += 10;
+    } else {
+      total += Number(c.r);
+    }
+  }
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces--;
+  }
+  return total;
+}
+
+function bjIsBlackjack(hand) {
+  return hand.length === 2 && bjValue(hand) === 21;
+}
+
+function bjCardEl(card, faceDown) {
+  const div = document.createElement("div");
+  div.className = "bj-card" + (faceDown ? " face-down" : "") + (card && (card.s === "♥" || card.s === "♦") ? " red" : "");
+  div.textContent = faceDown ? "🂠" : `${card.r}${card.s}`;
+  return div;
+}
+
+function bjSetMsg(text) {
+  if (bjMsgEl) bjMsgEl.textContent = text;
+}
+
+function renderBJ() {
+  if (!bjDealerEl || !bjPlayerEl) return;
+  bjDealerEl.innerHTML = "";
+  bjPlayerEl.innerHTML = "";
+  bjDealer.forEach((c, i) => {
+    bjDealerEl.appendChild(bjCardEl(c, bjHoleHidden && i === 1 && bjPhase === "player"));
+  });
+  bjPlayer.forEach((c) => bjPlayerEl.appendChild(bjCardEl(c, false)));
+  if (bjDealerValEl) {
+    bjDealerValEl.textContent =
+      bjDealer.length === 0 ? "" : bjHoleHidden && bjPhase === "player" ? `${bjValue([bjDealer[0]])} + ?` : `${bjValue(bjDealer)}`;
+  }
+  if (bjPlayerValEl) bjPlayerValEl.textContent = bjPlayer.length === 0 ? "" : `${bjValue(bjPlayer)}`;
+  if (bjBetEl) bjBetEl.textContent = `${bjBet}`;
+}
+
+function refreshBJ() {
+  if (!bjDealBtn) return;
+  if (bjFreeBtn) bjFreeBtn.hidden = coins >= 10;
+  if (bjPhase === "betting") {
+    bjDealBtn.disabled = coins < bjBet || bjBet <= 0;
+    bjHitBtn.disabled = true;
+    bjStandBtn.disabled = true;
+    if (coins < bjBet) {
+      bjSetMsg(coins < 10 ? "Out of coins — answer quiz questions or claim free coins." : "Bet too high for your balance. Lower it or earn more in the quiz.");
+    } else if (bjDealer.length === 0 && bjPlayer.length === 0) {
+      if (!bjMsgEl.textContent) bjSetMsg("Place a bet to start.");
+    }
+  } else if (bjPhase === "player") {
+    bjDealBtn.disabled = true;
+    bjHitBtn.disabled = false;
+    bjStandBtn.disabled = false;
+  } else {
+    bjDealBtn.disabled = coins < bjBet || bjBet <= 0;
+    bjHitBtn.disabled = true;
+    bjStandBtn.disabled = true;
+  }
+  renderBJ();
+}
+
+function bjDeal() {
+  if (bjPhase !== "betting" && bjPhase !== "done") return;
+  if (coins < bjBet || bjBet <= 0) {
+    refreshBJ();
+    return;
+  }
+  coins -= bjBet;
+  saveCoins();
+  updateCoinsUI();
+  bjDeck = bjNewDeck();
+  bjPlayer = [bjDeck.pop(), bjDeck.pop()];
+  bjDealer = [bjDeck.pop(), bjDeck.pop()];
+  bjPhase = "player";
+  bjHoleHidden = true;
+
+  const pBJ = bjIsBlackjack(bjPlayer);
+  const dBJ = bjIsBlackjack(bjDealer);
+  renderBJ();
+  if (pBJ || dBJ) {
+    bjHoleHidden = false;
+    bjPhase = "done";
+    if (pBJ && dBJ) {
+      coins += bjBet; // push
+      saveCoins();
+      bjSetMsg(`Both blackjack — push. Bet returned.`);
+    } else if (pBJ) {
+      const payout = Math.floor(bjBet * 2.5);
+      coins += payout;
+      saveCoins();
+      bjSetMsg(`BLACKJACK! +${payout - bjBet} 🪙`);
+      correctSound();
+      launchConfetti(30);
+    } else {
+      bjSetMsg(`Dealer blackjack. You lose 🪙${bjBet}.`);
+      wrongSound();
+    }
+    updateCoinsUI();
+    refreshBJ();
+    return;
+  }
+  bjSetMsg(`Your move: Hit or Stand? (bet 🪙${bjBet})`);
+  refreshBJ();
+}
+
+function bjHit() {
+  if (bjPhase !== "player") return;
+  bjPlayer.push(bjDeck.pop());
+  const v = bjValue(bjPlayer);
+  if (v > 21) {
+    bjHoleHidden = false;
+    bjPhase = "done";
+    bjSetMsg(`Bust! ${v} over 21. You lose 🪙${bjBet}.`);
+    wrongSound();
+    shakeRails();
+  } else if (v === 21) {
+    bjStand();
+    return;
+  } else {
+    bjSetMsg(`You have ${v}. Hit or Stand?`);
+  }
+  updateCoinsUI();
+  refreshBJ();
+}
+
+function bjStand() {
+  if (bjPhase !== "player") return;
+  bjHoleHidden = false;
+  while (bjValue(bjDealer) < 17) bjDealer.push(bjDeck.pop());
+  const p = bjValue(bjPlayer);
+  const d = bjValue(bjDealer);
+  bjPhase = "done";
+  if (d > 21) {
+    coins += bjBet * 2;
+    saveCoins();
+    bjSetMsg(`Dealer busts at ${d}! You win +${bjBet} 🪙`);
+    correctSound();
+    launchConfetti(30);
+  } else if (d > p) {
+    bjSetMsg(`Dealer ${d} beats ${p}. You lose 🪙${bjBet}.`);
+    wrongSound();
+  } else if (p > d) {
+    coins += bjBet * 2;
+    saveCoins();
+    bjSetMsg(`You ${p} beat dealer ${d}! +${bjBet} 🪙`);
+    correctSound();
+    launchConfetti(30);
+  } else {
+    coins += bjBet;
+    saveCoins();
+    bjSetMsg(`Push at ${p}. Bet returned.`);
+  }
+  updateCoinsUI();
+  refreshBJ();
+}
+
+if (bjChipsEl) {
+  bjChipsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn || bjPhase === "player") return;
+    if (btn.id === "bj-max") {
+      bjBet = Math.max(10, Math.min(coins, 500));
+    } else {
+      bjBet = Number(btn.dataset.bet) || 10;
+    }
+    [...bjChipsEl.querySelectorAll("button")].forEach((b) => b.classList.toggle("active", b === btn));
+    refreshBJ();
+  });
+}
+if (bjDealBtn) bjDealBtn.addEventListener("click", bjDeal);
+if (bjHitBtn) bjHitBtn.addEventListener("click", bjHit);
+if (bjStandBtn) bjStandBtn.addEventListener("click", bjStand);
+if (bjFreeBtn) {
+  bjFreeBtn.addEventListener("click", () => {
+    if (coins >= 10) return;
+    coins += 25;
+    saveCoins();
+    updateCoinsUI();
+    bjSetMsg("Claimed +25 🪙. Good luck!");
+    refreshBJ();
+  });
+}
+
 initMotion();
 start();
+updateCoinsUI();
+refreshBJ();
