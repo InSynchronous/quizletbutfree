@@ -507,19 +507,23 @@ body.shake-rails .rail { animation: rail-shake 0.3s ease; }
   75% { transform: translateX(3px); }
 }
 
-/* always show, just get skinnier on small computers */
+/* skinnier on small laptops, hidden on mobile */
 @media (max-width: 1100px) {
   .rail { flex-basis: 56px; }
 }
 
-@media (max-width: 800px) {
-  .rail { flex-basis: 38px; }
-  main { padding: 20px 10px 48px; }
-}
-
-@media (max-width: 500px) {
-  .rail { flex-basis: 26px; }
-  .ball { width: 10px; height: 10px; margin-left: -5px; }
+@media (max-width: 768px) {
+  .rail,
+  .plinko {
+    display: none;
+  }
+  .stage { display: block; }
+  main {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 12px 48px;
+  }
+  #motion-toggle { display: none; }
 }
 
 /* manual kill-switch + OS setting: hide falling balls, keep static pegs */
