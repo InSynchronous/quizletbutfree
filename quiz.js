@@ -3,6 +3,7 @@ let index = 0;
 let score = 0;
 let missed = [];
 let currentOptions = [];
+let mode = "forward"; // "forward" = term -> definition, "reverse" = definition -> term
 
 const termEl = document.getElementById("term");
 const optionsEl = document.getElementById("options");
@@ -13,6 +14,8 @@ const resultSection = document.getElementById("result");
 const finalEl = document.getElementById("final");
 const missedEl = document.getElementById("missed");
 const restartBtn = document.getElementById("restart");
+const modeForwardBtn = document.getElementById("mode-forward");
+const modeReverseBtn = document.getElementById("mode-reverse");
 
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -20,6 +23,14 @@ function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+function setMode(newMode) {
+  if (mode === newMode) return;
+  mode = newMode;
+  modeForwardBtn.classList.toggle("active", mode === "forward");
+  modeReverseBtn.classList.toggle("active", mode === "reverse");
+  start();
 }
 
 function start() {
@@ -35,7 +46,9 @@ function start() {
 function render() {
   const card = CARDS[order[index]];
   statusEl.textContent = `${index + 1} / ${CARDS.length} · Score ${score}`;
-  termEl.textContent = card.term;
+  const isReverse = mode === "reverse";
+  termEl.textContent = isReverse ? card.definition : card.term;
+  termEl.classList.toggle("definition-prompt", isReverse);
   nextBtn.disabled = true;
 
   const others = CARDS.filter((_, i) => i !== order[index]);
@@ -44,7 +57,7 @@ function render() {
   optionsEl.innerHTML = "";
   currentOptions.forEach((opt, i) => {
     const btn = document.createElement("button");
-    btn.textContent = opt.definition;
+    btn.textContent = isReverse ? opt.term : opt.definition;
     btn.addEventListener("click", () => answer(i, btn));
     optionsEl.appendChild(btn);
   });
@@ -108,5 +121,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 restartBtn.addEventListener("click", start);
+
+modeForwardBtn.addEventListener("click", () => setMode("forward"));
+modeReverseBtn.addEventListener("click", () => setMode("reverse"));
 
 start();
