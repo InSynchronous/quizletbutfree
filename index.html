@@ -7,7 +7,18 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main>
+  <div class="stage">
+    <aside class="rail left" aria-hidden="true">
+      <div class="plinko">
+        <div class="pegfield">
+          <div class="pegset"></div>
+        </div>
+        <div class="ball b1"></div>
+        <div class="ball b2"></div>
+      </div>
+    </aside>
+
+    <main>
     <header>
       <h1>Odyssey 509-1333</h1>
       <p id="status">1 / 30 · Score 0</p>
@@ -24,7 +35,6 @@
       <div id="options"></div>
       <div id="quiz-actions">
         <button id="submit" disabled>Submit</button>
-        <button id="next" disabled>Next →</button>
       </div>
     </section>
 
@@ -51,7 +61,19 @@
         <span>linkedin</span>
       </a>
     </footer>
-  </main>
+    </main>
+
+    <aside class="rail right" aria-hidden="true">
+      <div class="plinko">
+        <div class="pegfield">
+          <div class="pegset"></div>
+        </div>
+        <div class="ball b1"></div>
+        <div class="ball b2"></div>
+      </div>
+    </aside>
+  </div>
+  <button id="motion-toggle" type="button" aria-pressed="true" title="Pause side animation">motion: on</button>
   <script src="cards.js"></script>
   <script src="quiz.js"></script>
 </body>

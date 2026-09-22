@@ -16,7 +16,6 @@ const statusEl = document.getElementById("status");
 const barEl = document.getElementById("bar");
 const feedbackEl = document.getElementById("feedback");
 const submitBtn = document.getElementById("submit");
-const nextBtn = document.getElementById("next");
 const quizSection = document.getElementById("quiz");
 const resultSection = document.getElementById("result");
 const finalEl = document.getElementById("final");
@@ -27,6 +26,47 @@ const restartBtn = document.getElementById("restart");
 const retryMissedBtn = document.getElementById("retry-missed");
 const modeForwardBtn = document.getElementById("mode-forward");
 const modeReverseBtn = document.getElementById("mode-reverse");
+const motionToggle = document.getElementById("motion-toggle");
+
+let buttonMode = "submit"; // "submit" | "next"
+let graded = false;
+
+function resetActionButton(label = "Submit", next = false) {
+  buttonMode = next ? "next" : "submit";
+  submitBtn.textContent = label;
+  submitBtn.classList.toggle("is-next", next);
+}
+
+function setHype() {
+  document.body.dataset.hype = streak >= 2 ? "1" : "0";
+}
+
+function shakeRails() {
+  document.body.classList.remove("shake-rails");
+  void document.body.offsetWidth;
+  document.body.classList.add("shake-rails");
+}
+
+function applyMotion(off) {
+  document.body.classList.toggle("no-motion", off);
+  if (motionToggle) {
+    motionToggle.textContent = off ? "motion: off" : "motion: on";
+    motionToggle.setAttribute("aria-pressed", String(!off));
+  }
+  try {
+    localStorage.setItem("odyssey-motion", off ? "off" : "on");
+  } catch (_) {}
+}
+
+function initMotion() {
+  let off = false;
+  try {
+    off = localStorage.getItem("odyssey-motion") === "off";
+  } catch (_) {}
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) off = true;
+  applyMotion(off);
+  if (motionToggle) motionToggle.addEventListener("click", () => applyMotion(!document.body.classList.contains("no-motion")));
+}
 
 const PRAISE = ["Nice!", "Clean!", "Got it!", "Locked in!", "Sharp!", "Easy!"];
 const FIRE_PRAISE = ["On fire!", "Unstoppable!", "Cooking!", "In the zone!"];
@@ -111,6 +151,8 @@ function start(customOrder) {
   streak = 0;
   maxStreak = 0;
   selectedIndex = -1;
+  document.body.dataset.hype = "0";
+  document.body.classList.remove("shake-rails");
   resultSection.hidden = true;
   quizSection.hidden = false;
   render();
@@ -129,8 +171,9 @@ function render() {
   termEl.classList.toggle("definition-prompt", isReverse);
   setFeedback("", "");
   selectedIndex = -1;
+  graded = false;
+  resetActionButton("Submit", false);
   submitBtn.disabled = true;
-  nextBtn.disabled = true;
 
   const others = CARDS.filter((_, i) => i !== order[index]);
   currentOptions = shuffle([card, ...shuffle(others).slice(0, 3)]);
@@ -149,7 +192,7 @@ function render() {
 }
 
 function select(choiceIndex) {
-  if (!nextBtn.disabled) return; // already submitted — locked in
+  if (graded || buttonMode === "next") return; // already submitted — locked in
   selectedIndex = choiceIndex;
   const buttons = [...optionsEl.children];
   buttons.forEach((b, i) => b.classList.toggle("selected", i === choiceIndex));
@@ -159,12 +202,16 @@ function select(choiceIndex) {
 }
 
 function submitAnswer() {
-  if (selectedIndex < 0 || submitBtn.disabled) return;
-  if (!nextBtn.disabled) return; // already submitted
+  if (buttonMode === "next") {
+    advance();
+    return;
+  }
+  if (graded || selectedIndex < 0 || submitBtn.disabled) return;
   const card = CARDS[order[index]];
   const buttons = [...optionsEl.children];
   buttons.forEach((b) => (b.disabled = true));
   submitBtn.disabled = true;
+  graded = true;
 
   const picked = currentOptions[selectedIndex];
   const correctIndex = currentOptions.indexOf(card);
@@ -183,27 +230,31 @@ function submitAnswer() {
     } else {
       setFeedback(pick(PRAISE), "good");
     }
+    // correct: keep momentum, auto-advance
+    resetActionButton("Submit", false);
+    clearAuto();
+    autoTimer = setTimeout(() => advance(), 750);
   } else {
     streak = 0;
     btn.classList.add("wrong");
     buttons[correctIndex].classList.add("correct");
     wrongSound();
+    shakeRails();
     quizSection.classList.remove("shake");
     void quizSection.offsetWidth;
     quizSection.classList.add("shake");
     const answerText = mode === "reverse" ? card.term : card.definition;
     setFeedback(`Nope — it was "${answerText}"`, "bad");
     missed.push(card);
+    // wrong: pause and let Submit become Next so they can read it
+    clearAuto();
+    resetActionButton("Next →", true);
+    submitBtn.disabled = false;
+    submitBtn.focus();
   }
 
   updateStatus();
-  nextBtn.disabled = false;
-  nextBtn.focus();
-
-  // keep momentum: auto-advance so players stay in flow
-  clearAuto();
-  const delay = picked === card ? 750 : 1500;
-  autoTimer = setTimeout(() => advance(), delay);
+  setHype();
 }
 
 function advance() {
@@ -275,8 +326,6 @@ function showResult() {
   if (pct >= 70) launchConfetti();
 }
 
-nextBtn.addEventListener("click", advance);
-
 submitBtn.addEventListener("click", submitAnswer);
 
 restartBtn.addEventListener("click", () => start());
@@ -300,15 +349,12 @@ document.addEventListener("keydown", (e) => {
     const btn = optionsEl.children[n - 1];
     if (btn && !btn.disabled) btn.click();
   } else if (e.key === "Enter") {
-    if (!submitBtn.disabled) {
-      submitAnswer();
-    } else if (!nextBtn.disabled) {
-      advance();
-    }
+    if (!submitBtn.disabled) submitAnswer();
   }
 });
 
 modeForwardBtn.addEventListener("click", () => setMode("forward"));
 modeReverseBtn.addEventListener("click", () => setMode("reverse"));
 
+initMotion();
 start();

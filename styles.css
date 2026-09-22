@@ -3,11 +3,20 @@ body {
   margin: 0;
   color: #e6e6e6;
   background: #111;
+  overflow-x: hidden;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  min-height: 100vh;
 }
 
 main {
-  max-width: 600px;
-  margin: 0 auto;
+  flex: 0 1 600px;
+  min-width: 0;
+  margin: 0;
   padding: 24px 16px 48px;
 }
 
@@ -96,7 +105,7 @@ h1 {
   background: #331417;
 }
 
-#next, #restart, #retry-missed, #submit {
+#submit, #restart, #retry-missed {
   margin-top: 16px;
   font-size: 15px;
   padding: 8px 16px;
@@ -108,7 +117,6 @@ h1 {
   transition: transform 0.08s ease;
 }
 
-#next:not(:disabled):active,
 #restart:active,
 #retry-missed:active,
 #submit:not(:disabled):active {
@@ -131,11 +139,23 @@ h1 {
   flex-wrap: wrap;
 }
 
-#next:disabled, #submit:disabled {
+#submit:disabled {
   background: #222;
   color: #666;
   border-color: #444;
   cursor: default;
+}
+
+#submit.is-next {
+  background: #79c0ff;
+  border-color: #79c0ff;
+  color: #111;
+}
+
+#submit.is-next:disabled {
+  background: #222;
+  color: #666;
+  border-color: #444;
 }
 
 #quiz-actions {
@@ -331,7 +351,7 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   #bar,
   #options button,
-  #next, #restart, #retry-missed, #submit {
+  #submit, #restart, #retry-missed {
     transition: none;
   }
   #term,
@@ -342,4 +362,179 @@ h1 {
     animation: none;
   }
   .confetti { display: none; }
+}
+
+/* --- plinko side rails: CSS shapes only, transform/opacity animations --- */
+
+.rail {
+  flex: 0 0 84px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  background: #0d0d0d;
+}
+
+.rail.left { border-right: 1px solid #222; }
+.rail.right { border-left: 1px solid #222; }
+
+.plinko {
+  position: absolute;
+  inset: 0;
+}
+
+/* static peg board: balls do the moving (true top-to-bottom drops) */
+.pegfield {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.pegset {
+  height: 100%;
+  background-image:
+    /* sparse green coins */
+    radial-gradient(circle at 50% 50%, #2ea043 0 4px, transparent 5px),
+    /* staggered peg row A */
+    radial-gradient(circle at 50% 50%, #3d3d3d 0 3px, transparent 4px),
+    /* staggered peg row B (offset) */
+    radial-gradient(circle at 50% 50%, #3d3d3d 0 3px, transparent 4px);
+  background-size:
+    100% 240px,
+    33.333% 36px,
+    33.333% 36px;
+  background-position:
+    50% 72px,
+    16.666% 18px,
+    0 0;
+  background-repeat: repeat, repeat, repeat;
+}
+
+/* faint lane guides for depth (static, no anim cost) */
+.plinko::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 32%, #161616 32%, #161616 33%, transparent 33%),
+    linear-gradient(90deg, transparent 66%, #161616 66%, #161616 67%, transparent 67%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ball {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: #7ee787;
+  box-shadow: 0 0 0 2px #2ea043;
+  z-index: 2;
+  will-change: transform, opacity;
+  opacity: 0;
+  animation: ball-fall 5s linear infinite;
+}
+
+.ball.b2 { animation-delay: -2.5s; }
+
+.rail.right .ball {
+  background: #79c0ff;
+  box-shadow: 0 0 0 2px #388bfd;
+  animation-name: ball-fall-r;
+}
+
+/* streak hype: faster drops + hotter balls, still transform/opacity only */
+body[data-hype="1"] .ball { animation-duration: 2.6s; background: #ffa657; box-shadow: 0 0 0 2px #d29d2e; }
+body[data-hype="1"] .rail { background: #12100a; }
+
+/* one-shot shake on wrong answer (re-triggered from JS) */
+body.shake-rails .rail { animation: rail-shake 0.3s ease; }
+
+#motion-toggle {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  z-index: 60;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #222;
+  color: #aaa;
+  border: 1px solid #444;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+#motion-toggle:hover { color: #fff; border-color: #888; }
+
+/* true plinko drop: falls the full rail, zigzags off pegs, fades out/in at ends */
+@keyframes ball-fall {
+  0%   { transform: translate3d(-18px, -6vh, 0) scale(1, 1); opacity: 0; }
+  5%   { opacity: 1; }
+  12%  { transform: translate3d(14px, 10vh, 0) scale(1.15, 0.85); }
+  25%  { transform: translate3d(-14px, 26vh, 0) scale(1, 1); }
+  37%  { transform: translate3d(16px, 42vh, 0) scale(1.15, 0.85); }
+  50%  { transform: translate3d(-12px, 56vh, 0) scale(1, 1); }
+  62%  { transform: translate3d(14px, 70vh, 0) scale(1.15, 0.85); }
+  75%  { transform: translate3d(-16px, 84vh, 0) scale(1, 1); }
+  87%  { transform: translate3d(8px, 98vh, 0) scale(1.1, 0.9); opacity: 1; }
+  100% { transform: translate3d(-10px, 110vh, 0) scale(1, 1); opacity: 0; }
+}
+
+/* mirrored path for the right rail */
+@keyframes ball-fall-r {
+  0%   { transform: translate3d(18px, -6vh, 0) scale(1, 1); opacity: 0; }
+  5%   { opacity: 1; }
+  12%  { transform: translate3d(-14px, 10vh, 0) scale(1.15, 0.85); }
+  25%  { transform: translate3d(14px, 26vh, 0) scale(1, 1); }
+  37%  { transform: translate3d(-16px, 42vh, 0) scale(1.15, 0.85); }
+  50%  { transform: translate3d(12px, 56vh, 0) scale(1, 1); }
+  62%  { transform: translate3d(-14px, 70vh, 0) scale(1.15, 0.85); }
+  75%  { transform: translate3d(16px, 84vh, 0) scale(1, 1); }
+  87%  { transform: translate3d(-8px, 98vh, 0) scale(1.1, 0.9); opacity: 1; }
+  100% { transform: translate3d(10px, 110vh, 0) scale(1, 1); opacity: 0; }
+}
+
+@keyframes rail-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* always show, just get skinnier on small computers */
+@media (max-width: 1100px) {
+  .rail { flex-basis: 56px; }
+}
+
+@media (max-width: 800px) {
+  .rail { flex-basis: 38px; }
+  main { padding: 20px 10px 48px; }
+}
+
+@media (max-width: 500px) {
+  .rail { flex-basis: 26px; }
+  .ball { width: 10px; height: 10px; margin-left: -5px; }
+}
+
+/* manual kill-switch + OS setting: hide falling balls, keep static pegs */
+body.no-motion .ball,
+body.no-motion .rail {
+  animation: none !important;
+}
+
+body.no-motion .ball { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ball,
+  .rail {
+    animation: none !important;
+  }
+  .ball { opacity: 0; }
+  #motion-toggle { display: none; }
 }
