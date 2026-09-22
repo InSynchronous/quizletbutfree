@@ -123,3 +123,32 @@ h1 {
   padding: 8px 0;
   margin: 0;
 }
+
+.watermark {
+  margin-top: 32px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 12px;
+  color: #888;
+}
+
+.watermark a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+  text-decoration: none;
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+.watermark a:hover {
+  opacity: 1;
+  color: #111;
+  text-decoration: underline;
+}
